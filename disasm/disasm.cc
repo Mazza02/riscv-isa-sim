@@ -1442,6 +1442,11 @@ void disassembler_t::add_instructions(const isa_parser_t* isa, bool strict)
     DEFINE_FX2TYPE(fle_q);
   }
 
+  if (ext_enabled(EXT_ZR)) {
+    DISASM_INSN("rfmac_s", rfmac_s, 0, {&frd, &frs1, &frs2});
+    DISASM_INSN("rfsmac_s", rfsmac_s, 0, {&frd, &frs1, &frs2});
+  }
+
   if (ext_enabled(EXT_ZFBFMIN)) {
     DEFINE_FR1TYPE(fcvt_bf16_s);
     DEFINE_FR1TYPE(fcvt_s_bf16);
@@ -1719,7 +1724,7 @@ void disassembler_t::add_instructions(const isa_parser_t* isa, bool strict)
 
     //OPFVV/OPFVF
     //0b00_0000
-    DISASM_OPIV_VXI_INSN(vadd,         1, v);
+    DISASM_OPIV_VXI_INSN(vadd,         1, v); 
     DISASM_OPIV_VX__INSN(vsub,         1);
     DISASM_OPIV__XI_INSN(vrsub,        1);
     DISASM_OPIV_VX__INSN(vminu,        0);

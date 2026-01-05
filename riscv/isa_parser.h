@@ -13,6 +13,7 @@ typedef enum {
   EXT_ZFH = 'Z' + 1,
   EXT_ZFHMIN,
   EXT_ZBA,
+  EXT_ZR,
   EXT_ZBB,
   EXT_ZBC,
   EXT_ZBS,

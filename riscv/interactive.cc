@@ -279,6 +279,8 @@ void sim_t::interactive()
   funcs["fregh"] = &sim_t::interactive_fregh;
   funcs["fregs"] = &sim_t::interactive_fregs;
   funcs["fregd"] = &sim_t::interactive_fregd;
+  funcs["zrfregs"] = &sim_t::interactive_zrfregs;
+  funcs["zrfreg"] = &sim_t::interactive_zrfreg;
   funcs["pc"] = &sim_t::interactive_pc;
   funcs["insn"] = &sim_t::interactive_insn;
   funcs["priv"] = &sim_t::interactive_priv;
@@ -709,6 +711,31 @@ reg_t sim_t::get_mem(const std::vector<std::string>& args)
       break;
   }
   return val;
+}
+
+
+union zrfpr
+{
+  freg_t r;
+  float s;
+  double d;
+};
+
+void sim_t::interactive_zrfreg(const std::string& cmd, const std::vector<std::string>& args)
+{
+  freg_t r = get_freg(args, 64);
+
+  std::ostream out(sout_.rdbuf());
+  out << std::hex << "0x" << std::setfill ('0') << std::setw(16) << r.v[1] << std::setw(16) << r.v[0] << std::endl;
+}
+
+void sim_t::interactive_zrfregs(const std::string& cmd, const std::vector<std::string>& args)
+{
+  zrfpr zrf;
+  zrf.r = get_freg(args, 32);
+
+  std::ostream out(sout_.rdbuf());
+  out << (isBoxedF32(zrf.r) ? (double)zrf.s : NAN) << std::endl;
 }
 
 void sim_t::interactive_mem(const std::string& cmd, const std::vector<std::string>& args)

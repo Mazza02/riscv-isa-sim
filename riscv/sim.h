@@ -126,6 +126,8 @@ private:
   void interactive_reg(const std::string& cmd, const std::vector<std::string>& args);
   void interactive_freg(const std::string& cmd, const std::vector<std::string>& args);
   void interactive_fregh(const std::string& cmd, const std::vector<std::string>& args);
+  void interactive_zrfreg(const std::string& cmd, const std::vector<std::string>& args);
+  void interactive_zrfregs(const std::string& cmd, const std::vector<std::string>& args);
   void interactive_fregs(const std::string& cmd, const std::vector<std::string>& args);
   void interactive_fregd(const std::string& cmd, const std::vector<std::string>& args);
   void interactive_pc(const std::string& cmd, const std::vector<std::string>& args);
@@ -141,6 +143,7 @@ private:
   void interactive_until_noisy(const std::string& cmd, const std::vector<std::string>& args);
   reg_t get_reg(const std::vector<std::string>& args);
   freg_t get_freg(const std::vector<std::string>& args, int size);
+  freg_t get_zrfreg(const std::vector<std::string>& args, int size);
   reg_t get_mem(const std::vector<std::string>& args);
   reg_t get_pc(const std::vector<std::string>& args);
   reg_t get_insn(const std::vector<std::string>& args);

@@ -29,6 +29,11 @@
     require_extension(EXT_ZVBC); \
   } while (0)
 
+#define require_zvka \
+  do { \
+    require_extension(EXT_ZVKA); \
+  } while (0)
+
 // Ensures that the ZVKG extension (vector Galois Field Multiplication)
 // is present, and the vector unit is enabled and in a valid state.
 #define require_zvkg \

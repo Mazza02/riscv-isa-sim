@@ -154,6 +154,8 @@ isa_parser_t::isa_parser_t(const char* str, const char *priv)
       extension_table[EXT_ZAAMO] = true;
     } else if (ext_str == "zalrsc") {
       extension_table[EXT_ZALRSC] = true;
+    } else if (ext_str == "zr") {
+      extension_table[EXT_ZR] = true;
     } else if (ext_str == "zacas") {
       extension_table[EXT_ZACAS] = true;
     } else if (ext_str == "zabha") {

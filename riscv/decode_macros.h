@@ -17,6 +17,7 @@
 #define CHECK_REG(reg) ((void) 0)
 #define READ_REG(reg) (CHECK_REG(reg), STATE.XPR[reg])
 #define READ_FREG(reg) STATE.FPR[reg]
+#define READ_ZRFREG(reg) STATE.ZRFPR[reg]
 #define RD READ_REG(insn.rd())
 #define RS1 READ_REG(insn.rs1())
 #define RS2 READ_REG(insn.rs2())
@@ -40,6 +41,12 @@
     freg_t wdata = freg(value); /* value may have side effects */ \
     if (DECODE_MACRO_USAGE_LOGGED) STATE.log_reg_write[((reg) << 4) | 1] = wdata; \
     DO_WRITE_FREG(reg, wdata); \
+  })
+
+#define WRITE_ZRFREG(reg, value) ({ \
+    freg_t wdata = freg(value); /* value may have side effects */ \
+    if (DECODE_MACRO_USAGE_LOGGED) STATE.log_reg_write[((reg) << 4) | 1] = wdata; \
+    DO_WRITE_ZRFREG(reg, wdata); \
   })
 #define WRITE_VSTATUS STATE.log_reg_write[3] = {0, 0};
 
@@ -112,7 +119,9 @@
 #define dirty_ext_state STATE.sstatus->dirty(SSTATUS_XS)
 #define dirty_vs_state  STATE.sstatus->dirty(SSTATUS_VS)
 #define DO_WRITE_FREG(reg, value) (STATE.FPR.write(reg, value), dirty_fp_state)
+#define DO_WRITE_ZRFREG(reg, value) (STATE.ZRFPR.write(reg, value), dirty_fp_state)
 #define WRITE_FRD(value) WRITE_FREG(insn.rd(), value)
+#define WRITE_ZRFRD(value) WRITE_ZRFREG(insn.rd(), value)
 #define WRITE_FRD_H(value) \
 do { \
   if (p->extension_enabled(EXT_ZFINX)) \
@@ -122,11 +131,12 @@ do { \
   } \
 } while (0)
 #define WRITE_FRD_BF WRITE_FRD_H
+
 #define WRITE_FRD_F(value) \
 do { \
   if (p->extension_enabled(EXT_ZFINX)) \
     WRITE_REG(insn.rd(), sext_xlen((value).v)); \
-  else { \
+    else { \
     WRITE_FRD(value); \
   } \
 } while (0)
@@ -142,7 +152,13 @@ do { \
     WRITE_FRD(value); \
   } \
 } while (0)
- 
+
+#define WRITE_FRD_ZRF(value) \
+do { \
+  WRITE_FRD(value); \
+  STATE.ZRFPR.write(0, i32_to_f128(0)); \
+} while (0)
+
 #define SHAMT (insn.i_imm() & 0x3F)
 #define BRANCH_TARGET (pc + insn.sb_imm())
 #define JUMP_TARGET (pc + insn.uj_imm())

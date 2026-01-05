@@ -90,6 +90,7 @@ riscv_insn_ext_i = \
 	addi \
 	addiw \
 	addw \
+	add_increment \
 	and \
 	andi \
 	auipc \
@@ -162,6 +163,7 @@ riscv_insn_ext_a = \
 	sc_d \
 	sc_w \
 
+
 riscv_insn_ext_c = \
 	c_add \
 	c_addi \
@@ -218,6 +220,10 @@ riscv_insn_ext_m = \
 	remuw \
 	remw \
 
+riscv_insn_ext_zr = \
+	rfmac_s \
+	rfsmac_s \
+
 riscv_insn_ext_f = \
 	fadd_s \
 	fclass_s \
@@ -243,6 +249,7 @@ riscv_insn_ext_f = \
 	fmv_x_w \
 	fnmadd_s \
 	fnmsub_s \
+	fmac_s \
 	fsgnj_s \
 	fsgnjn_s \
 	fsgnjx_s \
@@ -491,6 +498,7 @@ riscv_insn_ext_v_alu_int = \
 	vadd_vi \
 	vadd_vv \
 	vadd_vx \
+	vaddi_vv \
 	vand_vi \
 	vand_vv \
 	vand_vx \
@@ -1133,6 +1141,7 @@ riscv_insn_ext_zvk = \
 	$(riscv_insn_ext_zvksh) \
 
 riscv_insn_list = \
+	$(riscv_insn_ext_zr) \
 	$(riscv_insn_ext_i) \
 	$(riscv_insn_ext_c) \
 	$(riscv_insn_ext_f) \
