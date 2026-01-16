@@ -3,7 +3,7 @@ Compilation and run (running spike):
 
 clang --target=riscv64-unknown-elf -march=rv64gcv -mabi=lp64d v_example_risc_simple.c -o v_risc_vector_add (EITHER OR)
 
-riscv64-unknown-elf-gcc -march=rv64gcv v_mac.c fmac.s rfmac.s -g -o mac (EITHER OR)
+riscv64-unknown-elf-gcc -march=rv64gcv v_mac.c fmac.s rfmac.s rfsmac.s -g -o mac (EITHER OR)
 
 spike --isa=rv64gcvzr pk mac mac 1> result.log
 
