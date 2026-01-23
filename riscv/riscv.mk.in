@@ -223,6 +223,8 @@ riscv_insn_ext_m = \
 riscv_insn_ext_zr = \
 	rfmac_s \
 	rfsmac_s \
+	vrfmac_vf \
+	vrfsmac_vf \
 
 riscv_insn_ext_f = \
 	fadd_s \
