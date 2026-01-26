@@ -2,5 +2,5 @@
 .global vrfmac_vf
 
 vrfmac_vf:
-   .insn r 0x57, 0x0, 0x64, x0, x0, x0
+   .insn r 0x57, 0x0, 0x64, x6, x7, x8
     ret

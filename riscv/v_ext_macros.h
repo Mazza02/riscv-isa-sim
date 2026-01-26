@@ -463,6 +463,10 @@ static inline bool is_overlapped_widen(const int astart, int asize,
   float##width##_t &vd = P.VU.elt<float##width##_t>(rd_num, i, true); \
   VFP_VF_CMP_PARAMS(width)
 
+#define VFP_VF_PARAMS_ZRV(width) \
+  float##width##_t &acc = P.VU.elt<float##width##_t>(acc_num, i, true); \
+  VFP_VF_CMP_PARAMS(width)
+
 #define CVT_FP_TO_FP_PARAMS(from_width, to_width) \
   auto vs2 = P.VU.elt<float##from_width##_t>(rs2_num, i); \
   auto &vd = P.VU.elt<float##to_width##_t>(rd_num, i, true);
@@ -1455,6 +1459,7 @@ VI_VX_ULOOP({ \
   reg_t UNUSED rd_num = insn.rd(); \
   reg_t UNUSED rs1_num = insn.rs1(); \
   reg_t UNUSED rs2_num = insn.rs2(); \
+  reg_t UNUSED acc_num = STATE.ZRVFPR[0]; \
   softfloat_roundingMode = VFP_RM
 
 #define VI_VFP_COMMON \
@@ -1721,6 +1726,35 @@ VI_VX_ULOOP({ \
     } \
     case e64: { \
       VFP_VF_PARAMS(64); \
+      BODY64; \
+      set_fp_exceptions; \
+      break; \
+    } \
+    default: \
+      require(0); \
+      break; \
+  }; \
+  DEBUG_RVV_FP_VF; \
+  VI_VFP_LOOP_END
+
+#define VI_VFP_VF_LOOP_ZR(BODY16, BODY32, BODY64) \
+  VI_CHECK_SSS(false); \
+  VI_VFP_LOOP_BASE \
+  switch (P.VU.vsew) { \
+    case e16: { \
+      VFP_VF_PARAMS_ZRV(16); \
+      BODY16; \
+      set_fp_exceptions; \
+      break; \
+    } \
+    case e32: { \
+      VFP_VF_PARAMS_ZRV(32); \
+      BODY32; \
+      set_fp_exceptions; \
+      break; \
+    } \
+    case e64: { \
+      VFP_VF_PARAMS_ZRV(64); \
       BODY64; \
       set_fp_exceptions; \
       break; \

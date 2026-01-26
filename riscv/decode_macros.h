@@ -18,6 +18,7 @@
 #define READ_REG(reg) (CHECK_REG(reg), STATE.XPR[reg])
 #define READ_FREG(reg) STATE.FPR[reg]
 #define READ_ZRFREG(reg) STATE.ZRFPR[reg]
+#define READ_ZRVFREG(reg) STATE.ZRVFPR[reg]
 #define RD READ_REG(insn.rd())
 #define RS1 READ_REG(insn.rs1())
 #define RS2 READ_REG(insn.rs2())
@@ -157,6 +158,13 @@ do { \
 do { \
   WRITE_FRD(value); \
   STATE.ZRFPR.write(0, i32_to_f128(0)); \
+} while (0)
+
+#define WRITE_FRD_ZRVF(value) \
+do { \
+  printf("%ld", value); \
+  WRITE_FREG(insn.rd(), i32_to_f128(value)); \
+  STATE.ZRVFPR.write(0, 0); \
 } while (0)
 
 #define SHAMT (insn.i_imm() & 0x3F)
