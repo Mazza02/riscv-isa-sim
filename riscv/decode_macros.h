@@ -49,6 +49,12 @@
     if (DECODE_MACRO_USAGE_LOGGED) STATE.log_reg_write[((reg) << 4) | 1] = wdata; \
     DO_WRITE_ZRFREG(reg, wdata); \
   })
+#define WRITE_ZRVFREG(reg, value) ({ \
+    reg_t wdata = (value); /* value may have side effects */ \
+    if (DECODE_MACRO_USAGE_LOGGED) STATE.log_reg_write[(reg) << 4 | 2] = {wdata, 0}; \
+    STATE.ZRVFPR.write(reg, wdata); \
+  })
+
 #define WRITE_VSTATUS STATE.log_reg_write[3] = {0, 0};
 
 /* the value parameter needs to be evaluated before writing to the registers */
@@ -121,8 +127,10 @@
 #define dirty_vs_state  STATE.sstatus->dirty(SSTATUS_VS)
 #define DO_WRITE_FREG(reg, value) (STATE.FPR.write(reg, value), dirty_fp_state)
 #define DO_WRITE_ZRFREG(reg, value) (STATE.ZRFPR.write(reg, value), dirty_fp_state)
+#define DO_WRITE_ZRVFREG(reg, value) (STATE.ZRVFPR.write(reg, value), dirty_fp_state)
 #define WRITE_FRD(value) WRITE_FREG(insn.rd(), value)
 #define WRITE_ZRFRD(value) WRITE_ZRFREG(insn.rd(), value)
+#define WRITE_ZRVFRD(value) WRITE_ZRVFREG(insn.rd(), value)
 #define WRITE_FRD_H(value) \
 do { \
   if (p->extension_enabled(EXT_ZFINX)) \
@@ -160,10 +168,11 @@ do { \
   STATE.ZRFPR.write(0, i32_to_f128(0)); \
 } while (0)
 
-#define WRITE_FRD_ZRVF(value) \
+#define WRITE_FRD_ZRVF_S(value) \
 do { \
-  printf("%ld", value); \
-  WRITE_FREG(insn.rd(), i32_to_f128(value)); \
+  printf("%ld \n", value); \
+  printf("%ld \n", value); \
+  WRITE_ZRVFRD(value); \
   STATE.ZRVFPR.write(0, 0); \
 } while (0)
 

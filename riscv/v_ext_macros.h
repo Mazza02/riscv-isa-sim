@@ -140,6 +140,16 @@ static inline bool is_overlapped_widen(const int astart, int asize,
     } \
   }
 
+  #define VI_CHECK_SSS_ZR(is_vs1) \
+  require_vm; \
+  if (P.VU.vflmul > 1) { \
+    require_align(insn.rd(), P.VU.vflmul); \
+    require_align(insn.rs2(), P.VU.vflmul); \
+    if (is_vs1) { \
+      require_align(insn.rs1(), P.VU.vflmul); \
+    } \
+  }
+
 #define VI_CHECK_STORE(elt_width, is_mask_ldst) \
   require_vector(false); \
   reg_t veew = is_mask_ldst ? 1 : sizeof(elt_width##_t) * 8; \
@@ -1484,6 +1494,11 @@ VI_VX_ULOOP({ \
   for (reg_t i = P.VU.vstart->read(); i < vl; ++i) { \
     VI_LOOP_ELEMENT_SKIP();
 
+#define VI_VFP_LOOP_BASE_ZR \
+  VI_VFP_COMMON \
+  for (reg_t i = P.VU.vstart->read(); i < vl; ++i) { \
+    //VI_LOOP_ELEMENT_SKIP();
+
 #define VI_VFP_BF16_LOOP_BASE \
   VI_VFP_BF16_COMMON \
   for (reg_t i = P.VU.vstart->read(); i < vl; ++i) { \
@@ -1738,22 +1753,27 @@ VI_VX_ULOOP({ \
   VI_VFP_LOOP_END
 
 #define VI_VFP_VF_LOOP_ZR(BODY16, BODY32, BODY64) \
-  VI_CHECK_SSS(false); \
-  VI_VFP_LOOP_BASE \
+  VI_CHECK_SSS_ZR(false); \
+  VI_VFP_LOOP_BASE_ZR \
+  printf("gets here! 0"); \
+  printf("vsew: %d\n", P.VU.vsew); \
   switch (P.VU.vsew) { \
     case e16: { \
+      printf("gets here! 1"); \
       VFP_VF_PARAMS_ZRV(16); \
       BODY16; \
       set_fp_exceptions; \
       break; \
     } \
     case e32: { \
+      printf("gets here! 2 \n"); \
       VFP_VF_PARAMS_ZRV(32); \
       BODY32; \
       set_fp_exceptions; \
       break; \
     } \
     case e64: { \
+      printf("gets here! 3"); \
       VFP_VF_PARAMS_ZRV(64); \
       BODY64; \
       set_fp_exceptions; \
