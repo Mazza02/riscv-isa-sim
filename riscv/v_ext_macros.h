@@ -1469,7 +1469,7 @@ VI_VX_ULOOP({ \
   reg_t UNUSED rd_num = insn.rd(); \
   reg_t UNUSED rs1_num = insn.rs1(); \
   reg_t UNUSED rs2_num = insn.rs2(); \
-  reg_t UNUSED acc_num = STATE.ZRVFPR[0]; \
+  reg_t UNUSED acc_num = 0; \
   softfloat_roundingMode = VFP_RM
 
 #define VI_VFP_COMMON \

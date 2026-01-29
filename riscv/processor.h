@@ -78,7 +78,7 @@ struct state_t
   regfile_t<reg_t, NXPR, true> XPR;
   regfile_t<freg_t, NFPR, false> FPR;
   regfile_t<freg_t, NZRFPR, false> ZRFPR;
-  regfile_t<reg_t, NZRVFPR, false> ZRVFPR;
+  regfile_t<freg_t, NZRVFPR, false> ZRVFPR;
 
   // control and status registers
   std::unordered_map<reg_t, csr_t_p> csrmap;

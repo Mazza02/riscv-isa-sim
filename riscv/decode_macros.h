@@ -50,9 +50,9 @@
     DO_WRITE_ZRFREG(reg, wdata); \
   })
 #define WRITE_ZRVFREG(reg, value) ({ \
-    reg_t wdata = (value); /* value may have side effects */ \
-    if (DECODE_MACRO_USAGE_LOGGED) STATE.log_reg_write[(reg) << 4 | 2] = {wdata, 0}; \
-    STATE.ZRVFPR.write(reg, wdata); \
+    freg_t wdata = freg(value); /* value may have side effects */ \
+    if (DECODE_MACRO_USAGE_LOGGED) STATE.log_reg_write[(reg) << 4 | 2] = wdata; \
+    DO_WRITE_ZRVFREG(reg, wdata); \
   })
 
 #define WRITE_VSTATUS STATE.log_reg_write[3] = {0, 0};
@@ -170,13 +170,8 @@ do { \
 
 #define WRITE_FRD_ZRVF_S(value) \
 do { \
-  uint32_t f_bits = i32_to_f32(value).v; \
-  \
-  freg_t f_reg; \
-  f_reg.v[0] = 0xffffffff00000000ULL | f_bits; \
-  \
-  WRITE_FRD(f_reg); \
-  STATE.ZRVFPR.write(0, 0); \
+  WRITE_FRD(value); \
+  STATE.ZRVFPR.write(0, i32_to_f128(0)); \
 } while (0)
 
 #define SHAMT (insn.i_imm() & 0x3F)
