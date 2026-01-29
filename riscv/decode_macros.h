@@ -170,9 +170,12 @@ do { \
 
 #define WRITE_FRD_ZRVF_S(value) \
 do { \
-  printf("%ld \n", value); \
-  printf("%ld \n", value); \
-  WRITE_ZRVFRD(value); \
+  uint32_t f_bits = i32_to_f32(value).v; \
+  \
+  freg_t f_reg; \
+  f_reg.v[0] = 0xffffffff00000000ULL | f_bits; \
+  \
+  WRITE_FRD(f_reg); \
   STATE.ZRVFPR.write(0, 0); \
 } while (0)
 

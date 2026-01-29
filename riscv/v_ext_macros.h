@@ -1755,25 +1755,20 @@ VI_VX_ULOOP({ \
 #define VI_VFP_VF_LOOP_ZR(BODY16, BODY32, BODY64) \
   VI_CHECK_SSS_ZR(false); \
   VI_VFP_LOOP_BASE_ZR \
-  printf("gets here! 0"); \
-  printf("vsew: %d\n", P.VU.vsew); \
   switch (P.VU.vsew) { \
     case e16: { \
-      printf("gets here! 1"); \
       VFP_VF_PARAMS_ZRV(16); \
       BODY16; \
       set_fp_exceptions; \
       break; \
     } \
     case e32: { \
-      printf("gets here! 2 \n"); \
       VFP_VF_PARAMS_ZRV(32); \
       BODY32; \
       set_fp_exceptions; \
       break; \
     } \
     case e64: { \
-      printf("gets here! 3"); \
       VFP_VF_PARAMS_ZRV(64); \
       BODY64; \
       set_fp_exceptions; \

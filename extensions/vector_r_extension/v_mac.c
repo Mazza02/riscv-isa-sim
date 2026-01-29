@@ -88,8 +88,6 @@ void r_convolution_vectorised(float ***Output, float ***Input, float ****Filter,
             for (size_t k = 0; k < W; k += S) {
                 vfloat32m1_t r_acc_vec = __riscv_vfmv_v_f_f32m1(0.0f, vl);
                 for (size_t l = 0; l < C; l++) {
-                    
-                    
                     for (size_t m = 0; m < Hfill; m++) {
                         vfloat32m1_t input_vec = __riscv_vle32_v_f32m1(&Input[l][j + m][k], vl);
                         float filter_scalar = Filter[i][l][m][0];
@@ -98,7 +96,6 @@ void r_convolution_vectorised(float ***Output, float ***Input, float ****Filter,
                     
                 }
                 vrfsmac_vf(&Output[i][j / S][k / S]);
-                printf("PROGRAM output: %f\n", Output[i][j / S][k / S]);
             }
         }
     }
@@ -173,7 +170,7 @@ int main() {
     // Init filter (3x3 kernel of 1s)
     for(int i = 0; i < Hfill; i++) {
         for(int j = 0; j < Wfill; j++) {
-            filter[0][0][i][j] = 5.0;
+            filter[0][0][i][j] = 5.4;
         }
     }
     printf("Filter:\n");

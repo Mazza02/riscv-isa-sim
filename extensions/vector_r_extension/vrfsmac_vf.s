@@ -3,7 +3,9 @@
 
 vrfsmac_vf:
 
-    .insn r 0x57, 0x0, 0x68, x5, a0, x0
+   .insn r 0x57, 0x0, 0x68, ft0, x0, x0
+   
+   fsw ft0, 0(a0)
 
     ret
     
