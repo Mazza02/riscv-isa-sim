@@ -474,7 +474,10 @@ static inline bool is_overlapped_widen(const int astart, int asize,
   VFP_VF_CMP_PARAMS(width)
 
 #define VFP_VF_PARAMS_ZRV(width) \
-  float##width##_t &acc = P.VU.elt<float##width##_t>(acc_num, i, true); \
+  float##width##_t acc = f##width(STATE.ZRVFPR[0]); \
+  if ((acc.v & 0x7FFFFFFF) > 0x7F800000) { \
+    acc = i32_to_f##width(0); \
+} \
   VFP_VF_CMP_PARAMS(width)
 
 #define CVT_FP_TO_FP_PARAMS(from_width, to_width) \
