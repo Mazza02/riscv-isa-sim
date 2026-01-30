@@ -61,22 +61,19 @@ void convolution_golden(float ***Output, float ***Input, float ****Filter, int M
 }
 
 void convolution_vectorised(float ***Output, float ***Input, float ****Filter, int M, int C, int H, int W, int S, int Hfill, int Wfill) {
+    size_t vl = __riscv_vsetvl_e32m1(W);
     for (size_t i = 0; i < M; i++) {
-        for (size_t j = 0; j < H; j += S) {
-            for (size_t k = 0; k < W; k += S) {
-                for (size_t l = 0; l < C; l++) {
-                    size_t vl = __riscv_vsetvl_e32m1(Wfill);
-                    vfloat32m1_t acc_vec = __riscv_vfmv_v_f_f32m1(0.0f, vl);
-                    for (size_t m = 0; m < Hfill; m++) {
-                        vfloat32m1_t input_vec = __riscv_vle32_v_f32m1(&Input[l][j + m][k], vl);
-                        float filter_scalar = Filter[i][l][m][0];
-                        acc_vec = __riscv_vfmacc_vf_f32m1(acc_vec, filter_scalar, input_vec, vl);
+        for (size_t j = 0; j < H; j++) {
+            vfloat32m1_t acc_vec = __riscv_vfmv_v_f_f32m1(0.0f, vl);
+            for (size_t k = 0; k < C; k++) {
+                for (size_t l = 0; l < Hfill; l++) {
+                    for (size_t m = 0; m < Wfill; m++) {
+                        vfloat32m1_t input_vec = __riscv_vle32_v_f32m1(&Input[k][j + l][m], vl);
+                        acc_vec = __riscv_vfmacc_vf_f32m1(acc_vec, Filter[i][k][l][m], input_vec, vl);
                     }
-                    vfloat32m1_t sum_vec = __riscv_vfredosum_vs_f32m1_f32m1(acc_vec, __riscv_vfmv_v_f_f32m1(0.0f, vl), vl);
-                    float sum = __riscv_vfmv_f_s_f32m1_f32(sum_vec);
-                    Output[i][j / S][k / S] += sum;
                 }
             }
+            __riscv_vse32_v_f32m1(&Output[i][j][0], acc_vec, vl);
         }
     }
 }
@@ -86,14 +83,12 @@ void r_convolution_vectorised(float ***Output, float ***Input, float ****Filter,
     for (size_t i = 0; i < M; i++) {
         for (size_t j = 0; j < H; j += S) {
             for (size_t k = 0; k < W; k += S) {
-                vfloat32m1_t r_acc_vec = __riscv_vfmv_v_f_f32m1(0.0f, vl);
                 for (size_t l = 0; l < C; l++) {
                     for (size_t m = 0; m < Hfill; m++) {
                         vfloat32m1_t input_vec = __riscv_vle32_v_f32m1(&Input[l][j + m][k], vl);
                         float filter_scalar = Filter[i][l][m][0];
                         vrfmac_vf(filter_scalar, input_vec, vl);
                     }
-                    
                 }
                 vrfsmac_vf(&Output[i][j / S][k / S]);
             }

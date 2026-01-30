@@ -130,7 +130,6 @@
 #define DO_WRITE_ZRVFREG(reg, value) (STATE.ZRVFPR.write(reg, value), dirty_fp_state)
 #define WRITE_FRD(value) WRITE_FREG(insn.rd(), value)
 #define WRITE_ZRFRD(value) WRITE_ZRFREG(insn.rd(), value)
-#define WRITE_ZRVFRD(value) WRITE_ZRVFREG(insn.rd(), value)
 #define WRITE_FRD_H(value) \
 do { \
   if (p->extension_enabled(EXT_ZFINX)) \
