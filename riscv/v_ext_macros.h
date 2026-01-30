@@ -474,7 +474,7 @@ static inline bool is_overlapped_widen(const int astart, int asize,
   VFP_VF_CMP_PARAMS(width)
 
 #define VFP_VF_PARAMS_ZRV(width) \
-  float##width##_t acc = f##width(STATE.ZRVFPR[0]); \
+  float##width##_t acc = f##width(STATE.ZRVFPR[0], P.VU.altfmt); \
   if ((acc.v & 0x7FFFFFFF) > 0x7F800000) { \
     acc = i32_to_f##width(0); \
 } \
