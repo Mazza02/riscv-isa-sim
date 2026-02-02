@@ -3,5 +3,5 @@
 
 
 vrfmac_vf:
-    .insn r 0x57, 0x0, 0x64, x8, f10, x8 
+    .insn 0x4, 0x9a855057 # It's #define MATCH_VRFMAC_VF 0x98005057 + 0x02000000 = 0x9a855057
     ret
