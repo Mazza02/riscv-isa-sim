@@ -61,6 +61,14 @@ typedef struct { uint64_t v[2]; } float128_t;
 typedef float8_t e4m3_t;
 typedef float8_t e5m2_t;
 
+
+/*----------------------------------------------------------------------------
+| OCP 8-bit micro-scaling floating-point (MXOFP8) types.
+*----------------------------------------------------------------------------*/
+typedef float8_t ocpmxe4m3_t;
+typedef float8_t ocpmxe5m2_t;
+typedef struct { uint8_t v; } mxscale_e8m0_t; // scaling factor
+
 /*----------------------------------------------------------------------------
 | The format of an 80-bit extended floating-point number in memory.  This
 | structure must contain a 16-bit field named 'signExp' and a 64-bit field

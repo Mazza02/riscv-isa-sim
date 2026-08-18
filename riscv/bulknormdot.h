@@ -168,6 +168,32 @@ class ofp8_e4m3 final : public IEEEFloatFormat<uint8_t, uint8_t, uint8_t, 4, 3> 
   }
 };
 
+/** OpenCompute Micro-scaling 8-bit Floating-point E4M3 (4-bit exponent, 3-bit mantissa) */
+class omxfp8_e4m3 final : public IEEEFloatFormat<uint8_t, uint8_t, uint8_t, 4, 3> {
+public:
+  operator uint8_t() const { return n; }
+  omxfp8_e4m3() {}
+  omxfp8_e4m3(uint8_t _n) : IEEEFloatFormat(_n) {}
+
+  bool inf() const override { return false; }
+
+  bool nan() const override { return exp() == expMask() && mant() == mantMask(); }
+  
+  bool special() const override { return nan(); }
+
+  bool sigNan() const override { return false; }
+};
+
+class omxfp8_e5m2 final : public IEEEFloatFormat<uint8_t, uint8_t, uint8_t, 5, 2> {
+public:
+  operator uint8_t() const { return n; }
+  omxfp8_e5m2() {}
+  omxfp8_e5m2(uint8_t _n) : IEEEFloatFormat(_n) {}
+  bool sigNan() const override { return false; }
+};
+
+
+
 /** bulk-normalization dot product (without accumulation) with binary32 result
  *
  * The actual products of significands is provided as an argument such that the model can be used
@@ -243,6 +269,38 @@ template<typename ValueTypeLHS, typename ValueTypeRHS, typename SigProdType> bul
     acc += flushed_prods[i]? 0 : // flush input subnormals
       (prod_sign != acc_sign ? -shifted_sig : shifted_sig);
   }
+
+    // Find largest exponent across product elements
+  int max_approx_prod_exp = approx_prod_exp[0];
+  for (int i = 1; i < cfg.n; i++) {
+    max_approx_prod_exp = std::max(max_approx_prod_exp, approx_prod_exp[i]);
+  }
+
+  int64_t acc = 0;
+
+  // Align mantissas and accumulate
+  for (int i = 0; i < cfg.n; i++) {
+    int prod_sign = a[i].sign() ^ b[i].sign();
+    uint64_t prod_sig = uint64_t(prod_sigs[i]);
+    prod_sig <<= (f32_mant_bits - lhs_mant_bits - rhs_mant_bits + cfg.guardBits);
+
+    int shiftAmt = max_approx_prod_exp - approx_prod_exp[i];
+    uint64_t shifted_sig = shift_right_jam(prod_sig, shiftAmt);
+    acc += flushed_prods[i] ? 0 : (prod_sign ? -int64_t(shifted_sig) : int64_t(shifted_sig));
+  }
+
+  bool sign = (acc < 0);
+  uint64_t mag = sign ? -acc : acc;
+  int norm_dist = int_log2(mag);
+
+  // Apply exponent computation including the micro-scaling offset
+  int exp = max_approx_prod_exp - f32_mant_bits - cfg.guardBits + norm_dist + total_scale_exp;
+
+  // Subnormal and denormal handling
+  int sig_bits = (!cfg.flushSub && exp <= 0) ? f32_mant_bits - (1 - exp) : f32_mant_bits;
+  sig_bits = std::max(sig_bits, 0);
+  uint32_t rounded_sig = shift_right_jam(uint64_t(mag) << sig_bits, norm_dist);
+  
 
   // normalize result to f32
   bool sign = (acc < 0) != acc_sign;
@@ -328,6 +386,16 @@ bulk_norm_out_t bulk_norm_dot_ofp8(const DotConfig cfg, const L* a, const R* b)
     prod_sigs[i] = a[i].sig() * (uint16_t) b[i].sig();
   }
   return bulk_norm_dot_no_mult<L, R, uint16_t>(cfg, a, b, &prod_sigs[0]);
+}
+
+template <typename L, typename R>
+bulk_norm_out_t bulk_norm_dot_mxfp(const DotConfig cfg, const L* a, const R* b, omx_scale_e8m0 scale_a, omx_scale_e8m0 scale_b)
+{
+  std::vector<uint16_t> prod_sigs(cfg.n);
+  for (int i = 0; i < cfg.n; i++) {
+    prod_sigs[i] = uint16_t(a[i].sig()) * uint16_t(b[i].sig());
+  }
+  return bulk_norm_dot_no_mult<L, R, uint16_t>(cfg, a, b, &prod_sigs[0], scale_a, scale_b);
 }
 
 #endif
