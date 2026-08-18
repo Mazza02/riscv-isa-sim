@@ -5,6 +5,7 @@ softfloat_c_srcs = \
 	e5m2_to_f16.c \
 	e4m3_to_bf16.c \
 	e5m2_to_bf16.c \
+	ocpmxfp8e4m3_to_bf16.c \
 	bf16_add.c \
 	bf16_div.c \
 	bf16_mul.c \

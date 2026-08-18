@@ -123,6 +123,7 @@ float128_t ui64_to_f128( uint64_t );
 void ui64_to_extF80M( uint64_t, extFloat80_t * );
 void ui64_to_f128M( uint64_t, float128_t * );
 bfloat16_t e4m3_to_bf16( e4m3_t );
+bfloat16_t ocpmxe4m3_to_bf16( ocpmxe4m3_t, mxscale_e8m0_t );
 float16_t e4m3_to_f16( e4m3_t );
 float16_t e5m2_to_f16( e5m2_t );
 bfloat16_t e5m2_to_bf16( e5m2_t );
