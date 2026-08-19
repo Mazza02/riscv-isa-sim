@@ -105,7 +105,13 @@ public:
   /** predicate: is the value a NaN (Not A Number) */
   virtual bool nan() const { return special() && mant() != 0; }
 
-  virtual bool sigNan() const { return nan() && !inf() && ( ( mant() >> (mantWidth - 1)) == 0); }
+  virtual bool sigNan() const {
+  if constexpr (mantWidth == 0) {
+    return false;
+  } else {
+    return nan() && !inf() && ((mant() >> (mantWidth - 1)) == 0);
+  }
+}
 
   bool isZero() const { return exp() == 0 && mant() == 0; }
 };
@@ -192,7 +198,13 @@ public:
   bool sigNan() const override { return false; }
 };
 
-
+class mx_scale_e8m0_t final : public IEEEFloatFormat<uint8_t, uint8_t, uint8_t, 8, 0> {
+public:
+  operator uint8_t() const { return n; }
+  mx_scale_e8m0_t() : IEEEFloatFormat(127) {}
+  mx_scale_e8m0_t(uint8_t _n) : IEEEFloatFormat(_n) {}
+  bool sigNan() const override { return false; }
+};
 
 /** bulk-normalization dot product (without accumulation) with binary32 result
  *
@@ -206,6 +218,8 @@ public:
  *
  */
 template<typename ValueTypeLHS, typename ValueTypeRHS, typename SigProdType> bulk_norm_out_t bulk_norm_dot_no_mult(const DotConfig cfg, const ValueTypeLHS* a, const ValueTypeRHS* b, const SigProdType* prod_sigs)
+  mx_scale_e8m0_t scale_a = mx_scale_e8m0_t(127),
+  mx_scale_e8m0_t scale_b = mx_scale_e8m0_t(127))
 {
   std::vector<int> approx_prod_exp(cfg.n);
   std::vector<int> flushed_prods(cfg.n);
@@ -247,29 +261,6 @@ template<typename ValueTypeLHS, typename ValueTypeRHS, typename SigProdType> bul
     any_sigNan |= a[i].sigNan() || b[i].sigNan();
   }
 
-  // find largest exponent
-  int max_approx_prod_exp = approx_prod_exp[0];
-  for (int i = 1; i < cfg.n; i++) {
-    max_approx_prod_exp = std::max(max_approx_prod_exp, approx_prod_exp[i]);
-  }
-
-  bool acc_sign = false; // assuming the accumulator is positive
-
-  int64_t acc = 0;
-
-  // compute products, normalize to largest exponent, accumulate
-  for (int i = 0; i < cfg.n; i++) {
-    int prod_sign = a[i].sign() ^ b[i].sign();
-    uint64_t prod_sig = uint64_t(prod_sigs[i]); // 16 to 64-bit zero extension
-    // align the product so the width of its fractional part is: f32_mant_bits(23) + guardBits
-    prod_sig <<= f32_mant_bits - lhs_mant_bits - rhs_mant_bits + cfg.guardBits;
-
-    int shiftAmt = max_approx_prod_exp - approx_prod_exp[i];
-    uint64_t shifted_sig = shift_right_jam(prod_sig, shiftAmt);
-    acc += flushed_prods[i]? 0 : // flush input subnormals
-      (prod_sign != acc_sign ? -shifted_sig : shifted_sig);
-  }
-
     // Find largest exponent across product elements
   int max_approx_prod_exp = approx_prod_exp[0];
   for (int i = 1; i < cfg.n; i++) {
@@ -293,23 +284,14 @@ template<typename ValueTypeLHS, typename ValueTypeRHS, typename SigProdType> bul
   uint64_t mag = sign ? -acc : acc;
   int norm_dist = int_log2(mag);
 
+  // Micro-scaling exponent adjustment
+  int total_scale_exp = (scale_a.exp() - scale_a.bias) + (scale_b.exp() - scale_b.bias);
+
   // Apply exponent computation including the micro-scaling offset
   int exp = max_approx_prod_exp - f32_mant_bits - cfg.guardBits + norm_dist + total_scale_exp;
 
   // Subnormal and denormal handling
   int sig_bits = (!cfg.flushSub && exp <= 0) ? f32_mant_bits - (1 - exp) : f32_mant_bits;
-  sig_bits = std::max(sig_bits, 0);
-  uint32_t rounded_sig = shift_right_jam(uint64_t(mag) << sig_bits, norm_dist);
-  
-
-  // normalize result to f32
-  bool sign = (acc < 0) != acc_sign;
-  uint64_t mag = acc < 0 ? -acc : acc; // absolute magnitude
-  int norm_dist = int_log2(mag);
-  int exp = max_approx_prod_exp - f32_mant_bits - cfg.guardBits + norm_dist;
-
-  // fixing normalization distance for subnormal results
-  int sig_bits = (!cfg.flushSub && exp <= 0) ? f32_mant_bits - (1-exp) : f32_mant_bits;
   sig_bits = std::max(sig_bits, 0);
   uint32_t rounded_sig = shift_right_jam(uint64_t(mag) << sig_bits, norm_dist);
 
@@ -364,24 +346,17 @@ template<typename ValueTypeLHS, typename ValueTypeRHS, typename SigProdType> bul
 /** bf16_t dot product (without accumulation) */
 static inline bulk_norm_out_t bulk_norm_dot_bf16(const DotConfig cfg, const bf16_t* a, const bf16_t* b)
 {
-  // product are extracted so that the no-mult version can be more easily matched against the RTL implementation
   std::vector<uint16_t> prod_sigs(cfg.n);
-
-  // compute products, normalize to largest exponent, accumulate
   for (int i = 0; i < cfg.n; i++) {
     prod_sigs[i] = a[i].sig() * (uint16_t) b[i].sig();
   }
-
   return bulk_norm_dot_no_mult<bf16_t, bf16_t, uint16_t>(cfg, a, b, &prod_sigs[0]);
 }
 
 template <typename L, typename R>
 bulk_norm_out_t bulk_norm_dot_ofp8(const DotConfig cfg, const L* a, const R* b)
 {
-  // products are extracted so that the no-mult version can be more easily matched against the RTL implementation
   std::vector<uint16_t> prod_sigs(cfg.n);
-
-  // compute products, normalize to largest exponent, accumulate
   for (int i = 0; i < cfg.n; i++) {
     prod_sigs[i] = a[i].sig() * (uint16_t) b[i].sig();
   }
@@ -389,7 +364,7 @@ bulk_norm_out_t bulk_norm_dot_ofp8(const DotConfig cfg, const L* a, const R* b)
 }
 
 template <typename L, typename R>
-bulk_norm_out_t bulk_norm_dot_mxfp(const DotConfig cfg, const L* a, const R* b, omx_scale_e8m0 scale_a, omx_scale_e8m0 scale_b)
+bulk_norm_out_t bulk_norm_dot_mxfp(const DotConfig cfg, const L* a, const R* b, mx_scale_e8m0_t scale_a, mx_scale_e8m0_t scale_b)
 {
   std::vector<uint16_t> prod_sigs(cfg.n);
   for (int i = 0; i < cfg.n; i++) {

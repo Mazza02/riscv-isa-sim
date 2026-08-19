@@ -41,7 +41,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "specialize.h"
 #include "softfloat.h"
 
-bfloat16_t ocpmxe4m3_to_bf16( ocpmxe4m3_t a )
+bfloat16_t ocpmxe4m3_to_bf16( ocpmxe4m3_t a, mxscale_e8m0_t scale)
 {
     union ui8_f8 uA;
     uint_fast8_t uiA;
