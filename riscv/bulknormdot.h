@@ -195,6 +195,7 @@ public:
   operator uint8_t() const { return n; }
   omxfp8_e5m2() {}
   omxfp8_e5m2(uint8_t _n) : IEEEFloatFormat(_n) {}
+  
   bool sigNan() const override { return false; }
 };
 
@@ -203,6 +204,18 @@ public:
   operator uint8_t() const { return n; }
   mx_scale_e8m0_t() : IEEEFloatFormat(127) {}
   mx_scale_e8m0_t(uint8_t _n) : IEEEFloatFormat(_n) {}
+  bool nan() const override { return n == 0xFF; }
+  bool special() const override { return nan(); }
+  bool sigNan() const override { return false; }
+};
+
+class mx_scale_e4m0_t final : public IEEEFloatFormat<uint8_t, uint8_t, uint8_t, 4, 0> {
+public:
+  operator uint8_t() const { return n; }
+  mx_scale_e4m0_t() : IEEEFloatFormat(127) {}
+  mx_scale_e4m0_t(uint8_t _n) : IEEEFloatFormat(_n) {}
+  bool nan() const override { return n == 0xFF; }
+  bool special() const override { return nan(); }
   bool sigNan() const override { return false; }
 };
 
@@ -217,7 +230,12 @@ public:
  * @param prod_signs array of products of significands
  *
  */
-template<typename ValueTypeLHS, typename ValueTypeRHS, typename SigProdType> bulk_norm_out_t bulk_norm_dot_no_mult(const DotConfig cfg, const ValueTypeLHS* a, const ValueTypeRHS* b, const SigProdType* prod_sigs)
+template<typename ValueTypeLHS, typename ValueTypeRHS, typename SigProdType> 
+bulk_norm_out_t bulk_norm_dot_no_mult(
+  const DotConfig cfg, 
+  const ValueTypeLHS* a, 
+  const ValueTypeRHS* b, 
+  const SigProdType* prod_sigs,
   mx_scale_e8m0_t scale_a = mx_scale_e8m0_t(127),
   mx_scale_e8m0_t scale_b = mx_scale_e8m0_t(127))
 {
@@ -284,11 +302,8 @@ template<typename ValueTypeLHS, typename ValueTypeRHS, typename SigProdType> bul
   uint64_t mag = sign ? -acc : acc;
   int norm_dist = int_log2(mag);
 
-  // Micro-scaling exponent adjustment
-  int total_scale_exp = (scale_a.exp() - scale_a.bias) + (scale_b.exp() - scale_b.bias);
-
-  // Apply exponent computation including the micro-scaling offset
-  int exp = max_approx_prod_exp - f32_mant_bits - cfg.guardBits + norm_dist + total_scale_exp;
+  int scale_offset = (scale_a - 127) + (scale_b - 127);
+  int exp = max_approx_prod_exp - f32_mant_bits - cfg.guardBits + norm_dist + scale_offset;
 
   // Subnormal and denormal handling
   int sig_bits = (!cfg.flushSub && exp <= 0) ? f32_mant_bits - (1 - exp) : f32_mant_bits;
