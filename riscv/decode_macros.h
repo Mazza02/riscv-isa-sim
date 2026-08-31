@@ -141,7 +141,7 @@ do { \
 #define WRITE_FRD_F(value) \
 do { \
   if (p->extension_enabled(EXT_ZFINX)) \
-    WRITE_REG(insn.rd(), sext_xlen((value).v)); \
+    WRITE_REG(insn.rd(), sext32((value).v)); \
   else { \
     WRITE_FRD(value); \
   } \
@@ -249,13 +249,6 @@ static inline bool is_aligned(const unsigned val, const unsigned pos)
   do { reg_t __npc = (x) & p->pc_alignment_mask(); \
        npc = PC_SERIALIZE_AFTER; \
        STATE.pc = __npc; \
-     } while (0)
-
-class wait_for_interrupt_t {};
-
-#define wfi() \
-  do { set_pc_and_serialize(npc); \
-       throw wait_for_interrupt_t(); \
      } while (0)
 
 #define serialize() set_pc_and_serialize(npc)

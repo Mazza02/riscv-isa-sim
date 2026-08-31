@@ -34,6 +34,7 @@ riscv_install_hdrs = \
 	encoding.h \
 	entropy_source.h \
 	extension.h \
+	imsic.h \
 	isa_parser.h \
 	jtag_dtm.h \
 	log_file.h \
@@ -57,6 +58,7 @@ riscv_srcs = \
 	execute.cc \
 	dts.cc \
 	sim.cc \
+	imsic.cc \
 	interactive.cc \
 	cachesim.cc \
 	mmu.cc \
@@ -78,6 +80,7 @@ riscv_srcs = \
 	vector_unit.cc \
 	socketif.cc \
 	cfg.cc \
+	aplic.cc \
 	$(riscv_gen_srcs) \
 
 riscv_test_srcs = \
@@ -1138,11 +1141,37 @@ riscv_insn_ext_zvk = \
 	$(riscv_insn_ext_zvksh) \
 
 riscv_insn_ext_zvabd = \
-	vabs_v \
 	vabd_vv \
+	vabd_vx \
 	vabdu_vv \
+	vabdu_vx \
 	vwabda_vv \
+	vwabda_vx \
 	vwabdau_vv \
+	vwabdau_vx \
+
+riscv_insn_ext_zvt = \
+	msettn \
+	msettm \
+	msettk \
+	msetmtype \
+	msetmtypei \
+	vtle8 \
+	vtse8 \
+	vtle16 \
+	vtse16 \
+	vtle32 \
+	vtse32 \
+	vtle64 \
+	vtse64 \
+	vtmv_t_v \
+	vtmv_v_t \
+	vtzero \
+	vtdiscard \
+	vtmmu_tvv \
+	vtmms_tvv \
+	vtfmm_tvv \
+	vtfmm_alt_tvv \
 
 riscv_insn_ext_zvzip = \
 	vzip_vv \
@@ -1814,6 +1843,7 @@ riscv_insn_list = \
 	$(riscv_insn_ext_zvbdota) \
 	$(riscv_insn_ext_zvdota) \
 	$(riscv_insn_ext_zvabd) \
+	$(riscv_insn_ext_zvt) \
 	$(riscv_insn_ext_zvzip) \
 	$(riscv_insn_ext_zilx) \
 	$(riscv_insn_priv) \

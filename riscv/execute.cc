@@ -177,11 +177,6 @@ static inline reg_t execute_insn_logged(processor_t* p, reg_t pc, insn_fetch_t f
         commit_log_print_insn(p, pc, fetch.insn);
       }
      }
-  } catch (wait_for_interrupt_t &t) {
-      if (p->get_log_commits_enabled()) {
-        commit_log_print_insn(p, pc, fetch.insn);
-      }
-      throw;
   } catch(mem_trap_t& t) {
       //handle segfault in midlle of vector load/store
       if (p->get_log_commits_enabled()) {
@@ -204,7 +199,7 @@ static inline reg_t execute_insn_logged(processor_t* p, reg_t pc, insn_fetch_t f
 bool processor_t::slow_path() const
 {
   return debug || state.single_step != state.STEP_NONE || state.debug_mode ||
-         log_commits_enabled || histogram_enabled || in_wfi || check_triggers_icount;
+         log_commits_enabled || histogram_enabled || is_waiting_for_interrupt() || check_triggers_icount;
 }
 
 // fetch/decode/execute loop
@@ -228,6 +223,7 @@ void processor_t::step(size_t n)
     reg_t pc = state.pc;
     state.prv_changed = false;
     state.v_changed = false;
+    reg_t mcountinhibit = state.mcountinhibit->read();
 
     #define advance_pc() { \
       if (unlikely(invalid_pc(pc))) { \
@@ -275,12 +271,9 @@ void processor_t::step(size_t n)
             }
           }
 
-          // debug mode wfis must nop
-          if (unlikely(in_wfi && !state.debug_mode)) {
-            throw wait_for_interrupt_t();
-          }
+          if (unlikely(is_waiting_for_interrupt()))
+            return;
 
-          in_wfi = false;
           insn_fetch_t fetch = mmu->load_insn(pc);
           if (debug && !state.serialized)
             disasm(fetch.insn);
@@ -355,23 +348,12 @@ void processor_t::step(size_t n)
     {
       enter_debug_mode(DCSR_CAUSE_SWBP, 0);
     }
-    catch (wait_for_interrupt_t &t)
-    {
-      // Return to the outer simulation loop, which gives other devices/harts a
-      // chance to generate interrupts.
-      //
-      // In the debug ROM this prevents us from wasting time looping, but also
-      // allows us to switch to other threads only once per idle loop in case
-      // there is activity.
-      n = ++instret;
-      in_wfi = true;
-    }
 
 serialize:
-    state.minstret->bump((state.mcountinhibit->read() & MCOUNTINHIBIT_IR) ? 0 : instret);
+    state.minstret->bump((mcountinhibit & MCOUNTINHIBIT_IR) ? 0 : instret);
 
     // Model a hart whose CPI is 1.
-    state.mcycle->bump((state.mcountinhibit->read() & MCOUNTINHIBIT_CY) ? 0 : instret);
+    state.mcycle->bump((mcountinhibit & MCOUNTINHIBIT_CY) ? 0 : instret);
 
     n -= instret;
   }
