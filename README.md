@@ -326,3 +326,31 @@ decoded text: Instruction sets want to be free!
 semihosting: *** application exited with 0 ***
 riscv.cpu halted due to breakpoint. Semihosting is active.
 ```
+
+
+Additions to Spike simulator
+------------------
+
+MicroScaling (MXFP8E4M3/MXFP8E5M2 + E8M0 scaling factor)
+------------------
+
+Based on the recent implementations of OCP FP8E4M3 and FP8E5M2, the above microscaling formats were implemented inside the softfloat library (ocpmxe4m3_t, ocpmxe5m2_t, mxscale_e8m0_t)
+
+They are based on the float8_t base to ensure the formats can be easily extended to other floating point based extensions.
+
+
+Modified the following files:
+  - softfloat_types.h
+  - softfloat.h (where data type conversions should be added and I haven't pushed anything here)
+
+MXDOTP
+------------------
+
+To make use of the micro-scaling format, we introduce the MXDOTP extension that in our rendition, provides a dot-product of 2 micro-scaling data types and ends with an accumulation to the destination register
+
+Since bulknormdot.h was used to help define the microscaling format, I followed what ocp fp8 used to make use of the dot product function available in the file
+
+Modified the following files:
+  - bulknormdot.h (initializes the microscaling format data-types and makes use of bulk-normalization dot product (from zvbdot and used with fp8e4m3/e5m2))
+  - encoding.h (addition of opcodes)
+  - mxdotp.h (fetches elements/scale from input registers, unpacks them into separate scale/mxfp formats, performs bulk-normalized dot-product and writes back accumulation to destination)
