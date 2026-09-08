@@ -715,6 +715,24 @@ static inline bool is_overlapped_widen(const int astart, int asize,
   } \
   VI_LOOP_END
 
+  #define VI_VV_LOOP_MX(BODY) \
+  VI_CHECK_SSS(true) \
+  VI_LOOP_BASE \
+  if (sew == e8) { \
+    VV_PARAMS(e8); \
+    BODY; \
+  } else if (sew == e16) { \
+    VV_PARAMS(e16); \
+    BODY; \
+  } else if (sew == e32) { \
+    VV_PARAMS(e32); \
+    BODY; \
+  } else if (sew == e64) { \
+    VV_PARAMS(e64); \
+    BODY; \
+  } \
+  VI_LOOP_END
+
 #define VI_V_ULOOP(BODY) \
   VI_CHECK_SSS(false) \
   VI_LOOP_BASE \
