@@ -331,12 +331,16 @@ riscv.cpu halted due to breakpoint. Semihosting is active.
 Additions to Spike simulator
 ------------------
 
-MicroScaling (MXFP8E4M3/MXFP8E5M2 + E8M0 scaling factor)
+MicroScaling 
 ------------------
 
-Based on the recent implementations of OCP FP8E4M3 and FP8E5M2, the above microscaling formats were implemented inside the softfloat library (ocpmxe4m3_t, ocpmxe5m2_t, mxscale_e8m0_t)
+MXFP8E4M3/MXFP8E5M2 + E8M0 scaling factor
+- Based on the recent implementations of OCP FP8E4M3 and FP8E5M2, the above microscaling formats were implemented inside the softfloat library (ocpmxe4m3_t, ocpmxe5m2_t, mxscale_e8m0_t)
 
-They are based on the float8_t base to ensure the formats can be easily extended to other floating point based extensions.
+- They are based on the float8_t base to ensure the formats can be easily extended to other floating point based extensions.
+
+MXFP4E2M1
+- Similar to MXFP8E4M3, this data type uses float4_t which has a 4-bit bitfield (uint8_t v: 4) where the value appears as uint8 but only 4 bits are available
 
 
 Modified the following files:
@@ -353,4 +357,4 @@ Since bulknormdot.h was used to help define the microscaling format, I followed 
 Modified the following files:
   - bulknormdot.h (initializes the microscaling format data-types and makes use of bulk-normalization dot product (from zvbdot and used with fp8e4m3/e5m2))
   - encoding.h (addition of opcodes)
-  - mxdotp.h (fetches elements/scale from input registers, unpacks them into separate scale/mxfp formats, performs bulk-normalized dot-product and writes back accumulation to destination)
+  - mx8dotp.h/mx4dotp.h (fetches elements/scale from input registers, unpacks them into separate scale/mxfp formats, performs bulk-normalized dot-product and writes back accumulation to destination)

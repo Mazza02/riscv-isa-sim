@@ -254,7 +254,8 @@ riscv_insn_ext_f = \
 	fsqrt_s \
 	fsub_s \
 	fsw \
-	mxdotp \
+	mx4dotp \
+	mx8dotp \
 
 riscv_insn_ext_f_zfa= \
 	fli_s \

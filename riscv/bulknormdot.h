@@ -214,6 +214,20 @@ public:
   bool sigNan() const override { return false; }
 };
 
+class omxfp4_e2m1 final : public IEEEFloatFormat<uint8_t, uint8_t, uint8_t, 2, 1> {
+public:
+  operator uint8_t() const { return n; }
+  omxfp4_e2m1() {}
+  omxfp4_e2m1(uint8_t _n) : IEEEFloatFormat(_n) {}
+  bool inf() const override { return false; }
+
+  bool nan() const override { return false; }
+
+  bool special() const override { return false; }
+
+  bool sigNan() const override { return false; }
+};
+
 class mx_scale_e8m0_t final : public IEEEFloatFormat<uint8_t, uint8_t, uint8_t, 8, 0> {
 public:
   operator uint8_t() const { return n; }

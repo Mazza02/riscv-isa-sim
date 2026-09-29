@@ -47,6 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 | the types below may, if desired, be defined as aliases for the native types
 | (typically 'float' and 'double', and possibly 'long double').
 *----------------------------------------------------------------------------*/
+typedef struct { uint8_t  v: 4; } float4_t;
 typedef struct { uint8_t  v; } float8_t;
 typedef struct { uint16_t v; } float16_t;
 typedef float16_t bfloat16_t;
@@ -67,6 +68,7 @@ typedef float8_t e5m2_t;
 *----------------------------------------------------------------------------*/
 typedef float8_t ocpmxe4m3_t;
 typedef float8_t ocpmxe5m2_t;
+typedef float4_t omxfp4_e2m1_t;
 typedef struct { uint8_t v; } mxscale_e8m0_t; // scaling factor
 
 /*----------------------------------------------------------------------------
