@@ -2301,6 +2301,23 @@ c_t generic_dot_product(const std::vector<a_t>& a, const std::vector<b_t>& b, c_
     } \
   }
 
+#define VMXDOTP_LOOP(a_t, b_t, c_t, dot, sa, sb) \
+  if (auto vl = P.VU.vl->read()) { \
+    for (reg_t idx = 0; idx < 8; idx++) { \
+      reg_t i = ci + idx; \
+      VI_LOOP_ELEMENT_SKIP(); \
+      std::vector<a_t> a(P.VU.vlmax, a_t()); \
+      std::vector<b_t> b(P.VU.vlmax, b_t()); \
+      for (reg_t k = 0; k < vl; k++) { \
+        a[k] = P.VU.elt<a_t>(insn.rs1(), k); \
+        b[k] = P.VU.elt<b_t>(vs2 + idx, k); \
+      } \
+      auto& acc = P.VU.elt<c_t>(insn.rd(), i, true); \
+      acc = dot(a, b, (sa), (sb), acc); \
+      set_fp_exceptions; \
+    } \
+  }
+
 #define ZVBDOT_GENERIC_LOOP(a_t, b_t, c_t, macc) \
   auto dot = std::bind(generic_dot_product<a_t, b_t, c_t>, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, macc); \
   ZVBDOT_LOOP(a_t, b_t, c_t, dot)

@@ -56,4 +56,20 @@ float32_t zvfqbdot8f_dot_acc(const std::vector<uint8_t>& a, const std::vector<ui
   return f32_add_odd(f32(res.out), c);
 }
 
+template<typename A, typename B>
+float32_t vmxdotp_dot_acc(const std::vector<uint8_t>& a, const std::vector<uint8_t>& b, mx_scale_e8m0_t scale_a, mx_scale_e8m0_t scale_b,  float32_t c)
+{
+  std::vector<A> fa(a.size());
+  std::transform(a.begin(), a.end(), fa.begin(), [](auto f) { return f; });
+
+  std::vector<B> fb(b.size());
+  std::transform(b.begin(), b.end(), fb.begin(), [](auto f) { return f; });
+
+  DotConfig cfg(a.size(), int_log2(a.size()) + ((a.size() & (a.size() - 1)) != 0));
+  auto res = bulk_norm_dot_mxfp(cfg, &fa[0], &fb[0], scale_a, scale_b);
+  softfloat_exceptionFlags |= res.flags;
+  return f32_add_odd(f32(res.out), c);
+}
+
+
 #endif
