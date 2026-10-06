@@ -197,6 +197,7 @@ static const extension_info_t extension_infos[] = {
   {"zvqwbdota8i", {EXT_ZVQWBDOTA8I}},
   {"zvqwbdota16i", {EXT_ZVQWBDOTA16I}},
   {"zvfqwbdota8f", {EXT_ZVFQWBDOTA8F}},
+  {"zvmxdotp", {EXT_VMXDOTP}, {"zve32f"}},
   {"zvfwbdota16bf", {EXT_ZVFWBDOTA16BF}},
   {"zvfbdota32f", {EXT_ZVFBDOTA32F}},
   {"zvqwdota8i", {EXT_ZVQWDOTA8I}},

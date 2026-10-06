@@ -22,6 +22,6 @@ DotConfig cfg(16, 4);
 bulk_norm_out_t dot_res = bulk_norm_dot_mxfp(cfg, a, b, scale_a, scale_b);
 
 //fetch accumulation from FRS1, add to dot product result, and write back to FRD
-float32_t c_in = f32(FRS1);
+float32_t c_in = f32(READ_FREG(insn.rd()));
 float32_t c_out = f32_add(c_in, f32(dot_res.out));
 WRITE_FRD(c_out);
