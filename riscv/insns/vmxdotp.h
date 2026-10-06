@@ -6,7 +6,7 @@ mx_scale_e8m0_t scale_a(scales & 0xFF);
 mx_scale_e8m0_t scale_b((scales >> 8) & 0xFF);
 
 VI_VFP_BASE;
-ZVBDOT_INIT(4);
+ZVLDOT_INIT(4);
 
 #define COMMA ,
 
