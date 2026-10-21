@@ -2289,6 +2289,20 @@ c_t generic_dot_product(const std::vector<a_t>& a, const std::vector<b_t>& b, c_
     set_fp_exceptions; \
   }
 
+#define VQ4DOTP_LOOP(a_t, b_t, c_t, dot, sa, sb) \
+  require(P.VU.vl->read() % 2 == 0); \
+  if (auto vl = P.VU.vl->read()) { \
+    std::vector<a_t> a(vl / 2, a_t()); \
+    std::vector<b_t> b(vl, b_t()); \
+    for (reg_t i = 0; i < vl / 2; i++) \
+      a[i] = P.VU.elt<a_t>(insn.rs1(), i); \
+    for (reg_t i = 0; i < vl; i++) \
+      b[i] = P.VU.elt<b_t>(insn.rs2(), i); \
+    auto& acc = P.VU.elt<c_t>(insn.rd(), 0, true); \
+    acc = dot(a, b, (sa), (sb), acc); \
+    set_fp_exceptions; \
+  }
+
 #define ZVLDOT_GENERIC_LOOP(a_t, b_t, c_t, macc) \
   auto dot = std::bind(generic_dot_product<a_t, b_t, c_t>, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, macc); \
   ZVLDOT_LOOP(a_t, b_t, c_t, dot)

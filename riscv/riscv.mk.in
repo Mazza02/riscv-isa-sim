@@ -1097,6 +1097,7 @@ riscv_insn_ext_zvbdota = \
 	vfqwbdota_alt_vv \
 	vfqwbdota_vv \
 	vmxdotp \
+	vq4dotp \
 	vfwbdota_vv \
 	vqwbdotas_vv \
 	vqwbdotau_vv \

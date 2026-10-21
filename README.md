@@ -358,3 +358,11 @@ Modified the following files:
   - bulknormdot.h (initializes the microscaling format data-types and makes use of bulk-normalization dot product (from zvbdot and used with fp8e4m3/e5m2))
   - encoding.h (addition of opcodes)
   - mx8dotp.h/mx4dotp.h (fetches elements/scale from input registers, unpacks them into separate scale/mxfp formats, performs bulk-normalized dot-product and writes back accumulation to destination)
+
+Mixed-Precision
+------------------
+
+Currently only widened arithmetic is performed but hoping to add direct mixed-precision arithmetic soon
+
+Vq4dotp
+- Adds a W4A8 arithmetic to spike where the W4 weight is wident to int8 before compute. Both low and high 4-bit weights are computed in this instruction
