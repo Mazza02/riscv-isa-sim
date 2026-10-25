@@ -71,23 +71,22 @@ float32_t vmxdotp_dot_acc(const std::vector<uint8_t>& a, const std::vector<uint8
   return f32_add_odd(f32(res.out), c);
 }
 
-static inline float32_t vq4dotp_dot_acc(const std::vector<uint8_t>& a, const std::vector<int8_t>& b, float16_t sa, float16_t sb, float32_t c)
+static inline int32_t vq4dotp_dot(const std::vector<uint8_t>& a, const std::vector<int8_t>& b)
 {
-  // widen each byte to int8 weights, low first, then high
-  std::vector<int8_t> w(2 * a.size());
-  for (size_t j = 0; j < a.size(); j++) {
-    w[j] = int8_t((a[j] & 0xF) - 8);
-    w[j + a.size()] = int8_t((a[j] >> 4) - 8);
-  }
-
-  // int8 x int8 products in 32 bits
   int32_t sumi = 0;
-  for (size_t i = 0; i < w.size(); i++)
+  // widen each byte to int8 weights, low first, then high
+  // the low bits are all widened first and computed, then all the high bits are shifted and compute
+  std::vector<int8_t> w(2 * a.size());
+  for (size_t j = 0; j < w.size(); j++) {
+    if (j >= a.size){
+      w[j + a.size()] = int8_t((a[j] >> 4) - 8);
+    }else{
+      w[j] = int8_t((a[j] & 0xF) - 8);
+    }
+    // int8 x int8 products in 32 bits
     sumi += int32_t(w[i]) * int32_t(b[i]);
-
-  // scale and add
-  const float32_t scale = f32_mul(f16_to_f32(sa), f16_to_f32(sb));
-  return f32_add(c, f32_mul(i32_to_f32(sumi), scale));
+  }
+  return sumi;
 }
 
 
