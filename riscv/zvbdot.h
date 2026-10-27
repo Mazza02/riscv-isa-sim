@@ -74,17 +74,18 @@ float32_t vmxdotp_dot_acc(const std::vector<uint8_t>& a, const std::vector<uint8
 static inline int32_t vq4dotp_dot(const std::vector<uint8_t>& a, const std::vector<int8_t>& b)
 {
   int32_t sumi = 0;
-  // widen each byte to int8 weights, low first, then high
   // the low bits are all widened first and computed, then all the high bits are shifted and compute
   std::vector<int8_t> w(2 * a.size());
   for (size_t j = 0; j < w.size(); j++) {
-    if (j >= a.size){
-      w[j + a.size()] = int8_t((a[j] >> 4) - 8);
+    if (j >= a.size()){
+      // assigns the longer vector register spaces and goes back on the packed weights, taking the higher bits requiring shifting back to normal position
+      w[j] = int8_t((a[j - a.size()] >> 4) - 8);
     }else{
+      // turns all lower placed packed bits into int8 and places them in a new register at the start
       w[j] = int8_t((a[j] & 0xF) - 8);
     }
     // int8 x int8 products in 32 bits
-    sumi += int32_t(w[i]) * int32_t(b[i]);
+    sumi += int32_t(w[j]) * int32_t(b[j]);
   }
   return sumi;
 }

@@ -366,3 +366,4 @@ Currently only widened arithmetic is performed but hoping to add direct mixed-pr
 
 Vq4dotp
 - Adds a W4A8 arithmetic to spike where the W4 weight is wident to int8 before compute. Both low and high 4-bit weights are computed in this instruction
+- Instruction first unpacks the lower bits in the packed vector into a doubled in size vector register. Once the lower bits are unpacked and turned into int8, the higher bits are shifted and turned into int8.
