@@ -71,23 +71,97 @@ float32_t vmxdotp_dot_acc(const std::vector<uint8_t>& a, const std::vector<uint8
   return f32_add_odd(f32(res.out), c);
 }
 
+
+// static inline int32_t vq4dotp_dot(const std::vector<uint8_t>& a, const std::vector<int8_t>& b)
+// {
+//   int32_t sumi = 0;
+//   // the low bits are all widened first and computed, then all the high bits are shifted and compute
+//   std::vector<int8_t> w(2 * a.size());
+//   for (size_t j = 0; j < w.size(); j++) {
+//     if (j >= a.size()){
+//       // assigns the longer vector register spaces and goes back on the packed weights, taking the higher bits requiring shifting back to normal position
+//       w[j] = int8_t((a[j - a.size()] >> 4) - 8);
+//     }else{
+//       // turns all lower placed packed bits into int8 and places them in a new register at the start
+//       w[j] = int8_t((a[j] & 0xF) - 8);
+//     }
+//     // int8 x int8 products in 32 bits
+//     sumi += int32_t(w[j]) * int32_t(b[j]);
+//   }
+//   return sumi;
+// }
+
 static inline int32_t vq4dotp_dot(const std::vector<uint8_t>& a, const std::vector<int8_t>& b)
 {
+  const size_t half = a.size();  // number of packed bytes
+  const size_t doubled = a.size() * 2; // to account for unpacking all bits
   int32_t sumi = 0;
-  // the low bits are all widened first and computed, then all the high bits are shifted and compute
-  std::vector<int8_t> w(2 * a.size());
-  for (size_t j = 0; j < w.size(); j++) {
-    if (j >= a.size()){
-      // assigns the longer vector register spaces and goes back on the packed weights, taking the higher bits requiring shifting back to normal position
-      w[j] = int8_t((a[j - a.size()] >> 4) - 8);
-    }else{
-      // turns all lower placed packed bits into int8 and places them in a new register at the start
-      w[j] = int8_t((a[j] & 0xF) - 8);
+
+  // has to go through both low-bit and high bit halves of q4
+  for (size_t j = 0; j < doubled; j++) {
+    size_t byte_index;
+    int bit_index;
+    if (j >= half) {
+      byte_index = j - half;
+      bit_index = 4;
+    } else {
+      byte_index = j;
+      bit_index = 0;
     }
-    // int8 x int8 products in 32 bits
-    sumi += int32_t(w[j]) * int32_t(b[j]);
+
+    // 4 bits, and its top bit inverted
+    const uint8_t field = (a[byte_index] >> bit_index) & 0x0F;
+    const uint8_t sign = ((field >> 3) & 1) ^ 1;
+
+    // since we can't do mixed-precision here, byte output must be created via shifting..
+    uint8_t weight = 0;
+    weight |= field & 0x07;                 // 0-2 bits
+    weight |= uint8_t(sign ? 0xF8 : 0x00);  // must copy sign to the rest..
+
+    sumi += int32_t(int8_t(weight)) * int32_t(b[j]);
   }
   return sumi;
+}
+
+static inline std::vector<int32_t> vq6dotp42_dot(const std::vector<uint8_t>& a, const std::vector<int8_t>& b)
+{
+  const size_t vl = b.size();
+  const size_t half = vl / 2;     // number of ql bytes
+  const size_t quarter = vl / 4;  // number of qh bytes
+  std::vector<int32_t> sums(vl / 16, 0);
+
+  for (size_t n = 0; n < vl; n++) {
+    // has to go through both low-bit and high bit halves of q4
+    size_t ql_byte_index;
+    int ql_bit_index;
+    if (n >= half) {
+      ql_byte_index = n - half;
+      ql_bit_index = 4;
+    } else {
+      ql_byte_index = n;
+      ql_bit_index = 0;
+    }
+
+    // this would be a buffer with the index of both ql and qh positions
+    const size_t quarter_index = n / quarter; // 0-3
+    const size_t qh_byte_index = half + (n - quarter_index * quarter);
+    const int qh_bit_index = int(2 * quarter_index);
+
+    // 4 + 2 bits, and its top bit inverted
+    const uint8_t low = (a[ql_byte_index] >> ql_bit_index) & 0x0F;
+    const uint8_t high = (a[qh_byte_index] >> qh_bit_index) & 0x03;
+    const uint8_t sign = ((high >> 1) & 1) ^ 1;
+
+    uint8_t weight = 0;
+    weight |= low;                          
+    weight |= uint8_t((high & 1) << 4);     // bit 4, last qh bit is sign
+    weight |= uint8_t(sign ? 0xE0 : 0x00);  // remainder is sign
+
+    // add to the partial sum of this weight's 16-weight group (since vl=256)
+    // scales would have to be added to eliminate the partial sums
+    sums[n / 16] += int32_t(int8_t(weight)) * int32_t(b[n]);
+  }
+  return sums;
 }
 
 

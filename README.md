@@ -365,5 +365,15 @@ Mixed-Precision
 Currently only widened arithmetic is performed but hoping to add direct mixed-precision arithmetic soon
 
 Vq4dotp
-- Adds a W4A8 arithmetic to spike where the W4 weight is wident to int8 before compute. Both low and high 4-bit weights are computed in this instruction
-- Instruction first unpacks the lower bits in the packed vector into a doubled in size vector register. Once the lower bits are unpacked and turned into int8, the higher bits are shifted and turned into int8.
+- Adds a widened int4 to int8 weight * int8 acitvations arithmetic to spike. Both low and high 4-bit weights are computed in this instruction
+- Instruction first unpacks the lower bits along with the sign separetely. A byte output is then created with shifted in position bits and the remainder is filled with signed values ending with weight/activation multiplication.
+Modified the following files:
+    - v_ext_macros.h
+    - zvbdot.h (the fused dot product function with unpacking, signed inversion, multiplication)
+
+Vq6dotp42 (K-Quant)
+- Adds a widened int6 to int8 weight * int8 acitvations arithmetic to spike. The 4 denotes a lower 4-bit packed weight and higher 2-bit packed weight joined together via vcreate before instruction instantiation.
+- Instruction first unpacks the lower bits along with the sign separetely. Index positions for both bit/byte are retroactively calculated since internal buffers would be required for indexing and it's not offered here.. The output byte is then created and since its a k-quantized function we save all partial sums and output them.
+Modified the following files:
+    - v_ext_macros.h
+    - zvbdot.h (the fused dot product function with unpacking, signed inversion, multiplication)

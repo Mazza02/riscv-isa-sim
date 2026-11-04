@@ -2290,7 +2290,6 @@ c_t generic_dot_product(const std::vector<a_t>& a, const std::vector<b_t>& b, c_
   }
 
 #define VQ4DOTP_LOOP(a_t, b_t, c_t, dot) \
-  require(P.VU.vl->read() % 2 == 0); \
   if (auto vl = P.VU.vl->read()) { \
     std::vector<a_t> a(vl / 2, a_t()); \
     std::vector<b_t> b(vl, b_t()); \
@@ -2298,7 +2297,23 @@ c_t generic_dot_product(const std::vector<a_t>& a, const std::vector<b_t>& b, c_
       a[i] = P.VU.elt<a_t>(insn.rs1(), i); \
     for (reg_t i = 0; i < vl; i++) \
       b[i] = P.VU.elt<b_t>(insn.rs2(), i); \
-    P.VU.elt<c_t>(insn.rd(), 0, true) = dot(a, b); \
+    auto& acc = P.VU.elt<c_t>(insn.rd(), 0, true); \
+    acc = dot(a, b); \
+  }
+
+#define VQ6DOTP42_LOOP(a_t, b_t, c_t, dot) \
+  if (auto vl = P.VU.vl->read()) { \
+    /* if vl = 128 bytes, 4-bit weight vl / 2 = 64 bytes + 2-bit weight vl / 4 = 32 bytes so need 3 * vl/4 == 96 bytes for 6 bits */ \
+    std::vector<a_t> a(3 * vl / 4, a_t()); \
+    std::vector<b_t> b(vl, b_t()); \
+    for (reg_t i = 0; i < 3 * vl / 4; i++) \
+      a[i] = P.VU.elt<a_t>(insn.rs1(), i); \
+    for (reg_t i = 0; i < vl; i++) \
+      b[i] = P.VU.elt<b_t>(insn.rs2(), i); \
+    const auto sums = dot(a, b); \
+    /* since this is k-quantized, 8 (for vl=128 or 16 for vl=256) partial sums must return since they all have to be scaled */ \
+    for (reg_t g = 0; g < sums.size(); g++) \
+      P.VU.elt<c_t>(insn.rd(), g, true) = sums[g]; \
   }
 
 #define ZVLDOT_GENERIC_LOOP(a_t, b_t, c_t, macc) \
