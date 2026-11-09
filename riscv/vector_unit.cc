@@ -16,6 +16,8 @@ void vectorUnit_t::vectorUnit_t::reset()
   auto state = p->get_state();
   state->add_csr(CSR_VSTART, vstart = std::make_shared<vector_csr_t>(p, CSR_VSTART, /*mask*/ VLEN - 1));
   state->add_csr(CSR_VXRM, vxrm = std::make_shared<vector_csr_t>(p, CSR_VXRM, /*mask*/ 0x3ul));
+  // vq6dotp42q. 0x3ul enables 0 ->3 and automatic reset
+  state->add_csr(CSR_VQDOTPIDX, vqidx = std::make_shared<vector_csr_t>(p, CSR_VQDOTPIDX, /*mask*/ 0x3ul));
   state->add_csr(CSR_VL, vl = std::make_shared<vector_csr_t>(p, CSR_VL, /*mask*/ 0));
   state->add_csr(CSR_VTYPE, vtype = std::make_shared<vector_csr_t>(p, CSR_VTYPE, /*mask*/ 0));
   state->add_csr(CSR_VLENB, std::make_shared<vector_csr_t>(p, CSR_VLENB, /*mask*/ 0, /*init*/ vlenb));
