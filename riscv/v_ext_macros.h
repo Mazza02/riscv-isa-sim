@@ -2316,6 +2316,33 @@ c_t generic_dot_product(const std::vector<a_t>& a, const std::vector<b_t>& b, c_
       P.VU.elt<c_t>(insn.rd(), g, true) = sums[g]; \
   }
 
+#define VQ6KDOTP42_LOOP(a_t, b_t, c_t, dot) \
+  /* read what quarter you're in for qh (0-1,2-3,4-5,6-7) */ \
+  const int vqidx = int(P.VU.vqidx->read() & 3); \
+  if (auto vl = P.VU.vl->read()) { \
+    require(vl == 32); \
+    std::vector<a_t> ql(vl, a_t()), qh(vl, a_t()), scales(8, a_t()); \
+    std::vector<b_t> b(vl, b_t()); \
+    /* read all instruction registers */ \
+    for (reg_t i = 0; i < vl; i++) { \
+      ql[i] = P.VU.elt<a_t>(insn.rs1(), i); \
+      qh[i] = P.VU.elt<a_t>(insn.rd(), i); \
+      b[i] = P.VU.elt<b_t>(insn.rs2(), i); \
+    } \
+    /* read all scales from CSR */ \
+    for (reg_t g = 0; g < scales.size(); g++) \
+      scales[g] = a_t(P.VU.vqscale->read() >> (8 * g)); \
+    const c_t partial = dot(ql, qh, scales, b, vqidx); \
+    /* if sum the quarter counter is zero, you don't have to read/write to accumulation CSR */ \
+    const c_t sum = (vqidx == 0 ? 0 : c_t(uint32_t(P.VU.vqacc->read()))) + partial; \
+    P.VU.vqacc->write(uint32_t(sum)); \
+    /* quarter counter is at the end, put sum in the destination register, overwriting qh */ \
+    if (vqidx == 3) \
+      P.VU.elt<c_t>(insn.rd(), 0, true) = sum; \
+  } \
+  /* move the counter and make sure it stays within the boundary 0-3 */ \
+  P.VU.vqidx->write((vqidx + 1) & 3);
+
 #define ZVLDOT_GENERIC_LOOP(a_t, b_t, c_t, macc) \
   auto dot = std::bind(generic_dot_product<a_t, b_t, c_t>, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, macc); \
   ZVLDOT_LOOP(a_t, b_t, c_t, dot)

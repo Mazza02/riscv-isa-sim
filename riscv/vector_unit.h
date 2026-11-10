@@ -93,7 +93,7 @@ public:
   reg_t vlmax = 0;
   reg_t vlenb = 0;
   vector_csr_t_p vxrm = 0, vstart = 0, vl = 0, vtype = 0, mtype = 0;
-  vector_csr_t_p vqdotpidx = 0;
+  vector_csr_t_p vqidx = 0, vqscale = 0, vqacc = 0; // init
   reg_t vma = 0, vta = 0;
   reg_t vsew = 0;
   float vflmul = 0;
