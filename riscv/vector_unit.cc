@@ -16,12 +16,6 @@ void vectorUnit_t::vectorUnit_t::reset()
   auto state = p->get_state();
   state->add_csr(CSR_VSTART, vstart = std::make_shared<vector_csr_t>(p, CSR_VSTART, /*mask*/ VLEN - 1));
   state->add_csr(CSR_VXRM, vxrm = std::make_shared<vector_csr_t>(p, CSR_VXRM, /*mask*/ 0x3ul));
-  // vqidx 0x3ul keeps only 2 bits, good for 0->3
-  // vqscale needs 64 bits - handles all the scales but could reduce with more frequent writes
-  // vqacc takes 32 bits to match the scalar output - could potentially use less since we are working with llm weights..
-  state->add_csr(CSR_VQIDX, vqidx = std::make_shared<vector_csr_t>(p, CSR_VQIDX, /*mask*/ 0x3ul));
-  state->add_csr(CSR_VQSCALE, vqscale = std::make_shared<vector_csr_t>(p, CSR_VQSCALE, /*mask*/ ~reg_t(0)));
-  state->add_csr(CSR_VQACC, vqacc = std::make_shared<vector_csr_t>(p, CSR_VQACC, /*mask*/ 0xfffffffful));
   state->add_csr(CSR_VL, vl = std::make_shared<vector_csr_t>(p, CSR_VL, /*mask*/ 0));
   state->add_csr(CSR_VTYPE, vtype = std::make_shared<vector_csr_t>(p, CSR_VTYPE, /*mask*/ 0));
   state->add_csr(CSR_VLENB, std::make_shared<vector_csr_t>(p, CSR_VLENB, /*mask*/ 0, /*init*/ vlenb));

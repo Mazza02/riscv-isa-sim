@@ -170,15 +170,14 @@ static inline int32_t vq6kdotp42_dot(const std::vector<uint8_t>& a_ql, const std
   int32_t sumi = 0;
   int32_t sums = 0;
 
-  const int ql_bit_index = (vqidx >= 2) ? 4 : 0;
-  const int qh_bit_index = 2 * vqidx;
+  const int ql_bit_index = ((vqidx >> 1) & 1) ? 4 : 0;
 
   for (size_t n = 0; n < vl; n++) {
-    const size_t ql_byte_index = n;
-    const size_t qh_byte_index = n;
+    const size_t qh_byte_index = n / 4;
+    const int qh_bit_index = int(2 * (n % 4));
 
     // 4 + 2 bits, and its top bit inverted
-    const uint8_t low = (a_ql[ql_byte_index] >> ql_bit_index) & 0x0F;
+    const uint8_t low = (a_ql[n] >> ql_bit_index) & 0x0F;
     const uint8_t high = (a_qh[qh_byte_index] >> qh_bit_index) & 0x03;
     const uint8_t sign = ((high >> 1) & 1) ^ 1;
 
@@ -192,7 +191,7 @@ static inline int32_t vq6kdotp42_dot(const std::vector<uint8_t>& a_ql, const std
 
     // apply scales and sum reduction at last partial sum
     if (n % 16 == 15) {
-      sumi += int32_t(int8_t(scales[2 * vqidx + n / 16])) * sums;
+      sumi += int32_t(int8_t(scales[n / 16])) * sums;
       sums = 0;
     }
   }
