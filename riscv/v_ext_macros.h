@@ -2319,23 +2319,19 @@ c_t generic_dot_product(const std::vector<a_t>& a, const std::vector<b_t>& b, c_
 #define VQ6KDOTP42_LOOP(a_t, b_t, c_t, dot) \
   if (auto vl = P.VU.vl->read()) { \
     require(vl == 32); \
-    const int quarter = int(P.VU.elt<uint8_t>(insn.rd(), 24) & 3); \
-    std::vector<a_t> ql(vl, a_t()), qh(8, a_t()), scales(2, a_t()); \
+    /* rd = sum (int32, bytes 0-3) | quarter counter 0-7 (byte 4) - the counter only restarts the sum at quarter 0 */ \
+    const int quarter = int(P.VU.elt<uint8_t>(insn.rd(), 4) & 7); \
+    /* a = ql[16] | qh[8] | scales[2] */ \
+    std::vector<a_t> a(vl, a_t()); \
     std::vector<b_t> b(vl, b_t()); \
-    for (reg_t i = 0; i < vl; i++) { \
-      ql[i] = P.VU.elt<a_t>(insn.rs1(), i); \
+    for (reg_t i = 0; i < a.size(); i++) \
+      a[i] = P.VU.elt<a_t>(insn.rs1(), i); \
+    for (reg_t i = 0; i < vl; i++) \
       b[i] = P.VU.elt<b_t>(insn.rs2(), i); \
-    } \
-    /* this quarter's qh and scales: the first or second of the record's two */ \
-    const reg_t slot = reg_t(quarter & 1); \
-    for (reg_t i = 0; i < qh.size(); i++) \
-      qh[i] = P.VU.elt<a_t>(insn.rd(), 4 + 8 * slot + i); \
-    for (reg_t g = 0; g < scales.size(); g++) \
-      scales[g] = P.VU.elt<a_t>(insn.rd(), 20 + 2 * slot + g); \
     /* accumulate into vd*/ \
     const uint32_t acc = quarter == 0 ? 0 : uint32_t(P.VU.elt<c_t>(insn.rd(), 0)); \
-    P.VU.elt<c_t>(insn.rd(), 0, true) = c_t(acc + uint32_t(dot(ql, qh, scales, b, quarter))); \
-    P.VU.elt<uint8_t>(insn.rd(), 24, true) = uint8_t((quarter + 1) & 3); \
+    P.VU.elt<c_t>(insn.rd(), 0, true) = c_t(acc + uint32_t(dot(a, b))); \
+    P.VU.elt<uint8_t>(insn.rd(), 4, true) = uint8_t((quarter + 1) & 7); \
   }
 
 #define ZVLDOT_GENERIC_LOOP(a_t, b_t, c_t, macc) \

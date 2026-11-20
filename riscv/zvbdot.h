@@ -164,21 +164,21 @@ static inline std::vector<int32_t> vq6dotp42_dot(const std::vector<uint8_t>& a, 
   return sums;
 }
 
-static inline int32_t vq6kdotp42_dot(const std::vector<uint8_t>& a_ql, const std::vector<uint8_t>& a_qh, const std::vector<uint8_t>& scales, const std::vector<int8_t>& b_activations, int vqidx)
+static inline int32_t vq6kdotp42_dot(const std::vector<uint8_t>& a, const std::vector<int8_t>& b_activations)
 {
   const size_t vl = b_activations.size();
   int32_t sumi = 0;
   int32_t sums = 0;
 
-  const int ql_bit_index = ((vqidx >> 1) & 1) ? 4 : 0;
-
   for (size_t n = 0; n < vl; n++) {
-    const size_t qh_byte_index = n / 4;
-    const int qh_bit_index = int(2 * (n % 4));
+    const size_t ql_byte_index = n % 16;
+    const int ql_bit_index = int(4 * (n / 16));
+    const size_t qh_byte_index = 16 + n % 8;
+    const int qh_bit_index = int(2 * (n / 8));
 
     // 4 + 2 bits, and its top bit inverted
-    const uint8_t low = (a_ql[n] >> ql_bit_index) & 0x0F;
-    const uint8_t high = (a_qh[qh_byte_index] >> qh_bit_index) & 0x03;
+    const uint8_t low = (a[ql_byte_index] >> ql_bit_index) & 0x0F;
+    const uint8_t high = (a[qh_byte_index] >> qh_bit_index) & 0x03;
     const uint8_t sign = ((high >> 1) & 1) ^ 1;
 
     uint8_t weight = 0;
@@ -191,7 +191,7 @@ static inline int32_t vq6kdotp42_dot(const std::vector<uint8_t>& a_ql, const std
 
     // apply scales and sum reduction at last partial sum
     if (n % 16 == 15) {
-      sumi += int32_t(int8_t(scales[n / 16])) * sums;
+      sumi += int32_t(int8_t(a[24 + n / 16])) * sums;
       sums = 0;
     }
   }
