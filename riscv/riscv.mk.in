@@ -1100,6 +1100,7 @@ riscv_insn_ext_zvbdota = \
 	vq4dotp \
 	vq6dotp42 \
 	vq6kdotp42 \
+	vq4kdotp \
 	vfwbdota_vv \
 	vqwbdotas_vv \
 	vqwbdotau_vv \

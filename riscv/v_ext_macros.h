@@ -2334,6 +2334,28 @@ c_t generic_dot_product(const std::vector<a_t>& a, const std::vector<b_t>& b, c_
     P.VU.elt<uint8_t>(insn.rd(), 4, true) = uint8_t((quarter + 1) & 7); \
   }
 
+#define VQ4KDOTP_LOOP(a_t, b_t, c_t, dot) \
+  if (auto vl = P.VU.vl->read()) { \
+    require(vl == 32); \
+    /* vd = sum (int32, bytes 0-3) | scaled min sum (int32, bytes 4-7) | quarter counter 0-7 (byte 8)]*/ \
+    const int sub = int(P.VU.elt<uint8_t>(insn.rd(), 8) & 7); \
+    /* vs1 = qs[16] | scale | min, bytes 18-31 free */ \
+    std::vector<a_t> a(vl, a_t()); \
+    std::vector<b_t> b(vl, b_t()); \
+    for (reg_t i = 0; i < a.size(); i++) \
+      a[i] = P.VU.elt<a_t>(insn.rs1(), i); \
+    for (reg_t i = 0; i < vl; i++) \
+      b[i] = P.VU.elt<b_t>(insn.rs2(), i); \
+    int32_t min_sum = 0; \
+    const int32_t dot_sum = dot(a, b, min_sum); \
+    /* accumulate into vd */ \
+    const uint32_t acc_d = sub == 0 ? 0 : uint32_t(P.VU.elt<c_t>(insn.rd(), 0)); \
+    const uint32_t acc_m = sub == 0 ? 0 : uint32_t(P.VU.elt<c_t>(insn.rd(), 1)); \
+    P.VU.elt<c_t>(insn.rd(), 0, true) = c_t(acc_d + uint32_t(dot_sum)); \
+    P.VU.elt<c_t>(insn.rd(), 1, true) = c_t(acc_m + uint32_t(min_sum)); \
+    P.VU.elt<uint8_t>(insn.rd(), 8, true) = uint8_t((sub + 1) & 7); \
+  }
+
 #define ZVLDOT_GENERIC_LOOP(a_t, b_t, c_t, macc) \
   auto dot = std::bind(generic_dot_product<a_t, b_t, c_t>, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, macc); \
   ZVLDOT_LOOP(a_t, b_t, c_t, dot)

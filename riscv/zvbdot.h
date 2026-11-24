@@ -198,5 +198,27 @@ static inline int32_t vq6kdotp42_dot(const std::vector<uint8_t>& a, const std::v
   return sumi;
 }
 
+static inline int32_t vq4kdotp_dot(const std::vector<uint8_t>& a, const std::vector<int8_t>& b_activations, int32_t& min_sum)
+{
+  const size_t vl = b_activations.size();
+  int32_t sum_qb = 0;
+  int32_t sum_b = 0;
+
+  for (size_t n = 0; n < vl; n++) {
+    const size_t qs_byte_index = n % 16;
+    const int qs_bit_index = int(4 * (n / 16));
+
+    const uint8_t q = (a[qs_byte_index] >> qs_bit_index) & 0x0F;
+
+    sum_qb += int32_t(q) * int32_t(b_activations[n]);
+    sum_b += int32_t(b_activations[n]);
+  }
+
+  const int32_t scale = int32_t(a[16]);
+  const int32_t min = int32_t(a[17]);
+  min_sum = min * sum_b;
+  return scale * sum_qb;
+}
+
 
 #endif
