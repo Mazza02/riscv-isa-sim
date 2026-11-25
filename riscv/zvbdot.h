@@ -220,5 +220,28 @@ static inline int32_t vq4kdotp_dot(const std::vector<uint8_t>& a, const std::vec
   return scale * sum_qb;
 }
 
+static inline int32_t vq5kdotp_dot(const std::vector<uint8_t>& a, const std::vector<int8_t>& b_activations)
+{
+  const size_t vl = b_activations.size();
+  int32_t sum_qb = 0;
+
+  for (size_t n = 0; n < vl; n++) {
+    const size_t qs_byte_index = n % 16;
+    const int qs_bit_index = int(4 * (n / 16));
+    const size_t qh_byte_index = 16 + n % 4;
+    const int qh_bit_index = int(n / 4);
+
+    // 4 + 1 bits
+    const uint8_t low = (a[qs_byte_index] >> qs_bit_index) & 0x0F;
+    const uint8_t high = (a[qh_byte_index] >> qh_bit_index) & 0x01;
+    const uint8_t q = uint8_t(low | (high << 4));
+
+    sum_qb += int32_t(q) * int32_t(b_activations[n]);
+  }
+
+  const int32_t scale = int32_t(a[20] & 0x3F);
+  return scale * sum_qb;
+}
+
 
 #endif
